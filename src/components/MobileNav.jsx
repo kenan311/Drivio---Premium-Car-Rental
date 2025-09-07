@@ -116,7 +116,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
             {/* Content wrapper */}
             <div className="relative min-h-full flex flex-col">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 p-6 pt-16">
+            <div className="bg-white border-b border-gray-200 p-6 pt-15">
               <div className="flex items-center justify-between">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
