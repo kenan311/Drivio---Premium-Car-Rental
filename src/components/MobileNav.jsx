@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLang }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Close menu on escape key
+  // Escape + Scroll Lock
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -14,7 +14,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -24,13 +24,13 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-  
+
   const labels = {
     en: { home: 'Home', cars: 'Cars', checkcar: 'Check your car', about: 'About', contact: 'Contact', en: 'EN', sq: 'SQ' },
     sq: { home: 'Ballina', cars: 'Makinat', checkcar: 'Kontrollo makinën', about: 'Rreth nesh', contact: 'Kontakti', en: 'EN', sq: 'SQ' }
-  }
-  const t = labels[lang] || labels.en
-  
+  };
+  const t = labels[lang] || labels.en;
+
   const navItems = [
     { id: 'home', label: t.home, icon: '🏠' },
     { id: 'cars', label: t.cars, icon: '🚗' },
@@ -53,23 +53,23 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
           className="w-6 h-6 flex flex-col justify-center items-center"
         >
           <motion.span
-            animate={{ 
-              rotate: isOpen ? 45 : 0, 
+            animate={{
+              rotate: isOpen ? 45 : 0,
               y: isOpen ? 0 : -6,
               scaleX: isOpen ? 0.8 : 1
             }}
             className="w-5 h-0.5 bg-gray-800 block origin-center transition-all duration-300"
           />
           <motion.span
-            animate={{ 
+            animate={{
               opacity: isOpen ? 0 : 1,
               scaleX: isOpen ? 0 : 1
             }}
             className="w-5 h-0.5 bg-gray-800 block mt-1 origin-center transition-all duration-300"
           />
           <motion.span
-            animate={{ 
-              rotate: isOpen ? -45 : 0, 
+            animate={{
+              rotate: isOpen ? -45 : 0,
               y: isOpen ? 0 : 6,
               scaleX: isOpen ? 0.8 : 1
             }}
@@ -78,15 +78,16 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
         </motion.div>
       </button>
 
-      {/* Mobile Menu Overlay */}
+      {/* Overlay (nga transparent → bardhë) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="md:hidden fixed inset-0 z-[65] bg-black/30"
+            key="overlay"
+            initial={{ opacity: 0, backgroundColor: "rgba(255,255,255,0)" }}
+            animate={{ opacity: 1, backgroundColor: "rgba(255,255,255,1)" }}
+            exit={{ opacity: 0, backgroundColor: "rgba(255,255,255,0)" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="md:hidden fixed inset-0 z-[65]"
             onClick={() => setIsOpen(false)}
           />
         )}
@@ -96,28 +97,24 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
       <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
+            key="menu"
             initial={{ x: '-100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '-100%', opacity: 0 }}
-            transition={{ 
-              type: 'spring', 
-              damping: 25, 
+            transition={{
+              type: 'spring',
+              damping: 25,
               stiffness: 300,
               mass: 0.7,
               opacity: { duration: 0.2 }
             }}
             className="md:hidden fixed top-0 left-0 z-[70] w-full h-full bg-white shadow-2xl"
-            style={{ 
-              display: isOpen ? 'block' : 'none',
-              backgroundColor: '#ffffff',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              zIndex: 70
-            }}
           >
+            {/* Solid white backdrop to guarantee no transparency */}
+            <div className="absolute inset-0 bg-white"></div>
+
+            {/* Content wrapper */}
+            <div className="relative min-h-full flex flex-col">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 p-6 pt-24">
               <div className="flex items-center justify-between">
@@ -148,7 +145,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
 
             <div className="p-6 bg-white flex flex-col h-full">
               {/* Language Toggle */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -159,21 +156,25 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
                   Language / Gjuha
                 </h3>
                 <div className="flex gap-2">
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm border touch-manipulation transition-all duration-200 ${
-                      lang === 'en' ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm border transition-all duration-200 ${
+                      lang === 'en'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                     }`}
                     onClick={() => setLang && setLang('en')}
                   >
                     {t.en}
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm border touch-manipulation transition-all duration-200 ${
-                      lang === 'sq' ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm border transition-all duration-200 ${
+                      lang === 'sq'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                     }`}
                     onClick={() => setLang && setLang('sq')}
                   >
@@ -183,7 +184,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
               </motion.div>
 
               {/* Navigation Items */}
-              <motion.nav 
+              <motion.nav
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -194,26 +195,26 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
                     key={item.id}
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ 
-                      delay: 0.5 + (index * 0.1),
-                      type: "spring",
+                    transition={{
+                      delay: 0.5 + index * 0.1,
+                      type: 'spring',
                       stiffness: 100
                     }}
                     onClick={() => {
                       onNavigate(item.id);
                       setIsOpen(false);
                     }}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all duration-300 touch-manipulation group ${
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all duration-300 group ${
                       currentPage === item.id
-                        ? 'bg-slate-900 text-white shadow-lg transform scale-[1.02]'
+                        ? 'bg-slate-900 text-white shadow-lg scale-[1.02]'
                         : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 hover:shadow-md'
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <motion.span 
+                    <motion.span
                       className="text-2xl flex-shrink-0"
-                      animate={{ 
+                      animate={{
                         rotate: currentPage === item.id ? [0, -10, 10, 0] : 0,
                         scale: currentPage === item.id ? 1.1 : 1
                       }}
@@ -230,28 +231,19 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
                         className="ml-auto w-2 h-2 bg-white rounded-full shadow-sm"
                       />
                     )}
-                    <motion.div
-                      className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                      initial={{ x: -10 }}
-                      animate={{ x: 0 }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </motion.div>
                   </motion.button>
                 ))}
               </motion.nav>
 
               {/* Footer */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
                 className="mt-6 pt-4 border-t border-gray-200"
               >
                 <div className="text-center text-sm text-gray-500">
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.9 }}
@@ -259,7 +251,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
                   >
                     Drivio - Premium Car Rental
                   </motion.p>
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.0 }}
@@ -270,6 +262,7 @@ export default function MobileNav({ currentPage, onNavigate, lang = 'en', setLan
                 </div>
               </motion.div>
             </div>
+            </div>{/* end content wrapper */}
           </motion.div>
         )}
       </AnimatePresence>
