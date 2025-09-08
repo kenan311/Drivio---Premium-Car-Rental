@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import CarCard from "../components/CarCard";
 import Filters from "../components/Filters";
+import AdvancedSearch from "../components/AdvancedSearch";
 import BookingModal from "../components/BookingModal";
 import cars from "../data/cars";
 
@@ -33,6 +34,14 @@ export default function Cars({ lang = 'en' }) {
   const [type, setType] = useState("All");
   const [seats, setSeats] = useState("All");
   const [driveMode, setDriveMode] = useState("All");
+  const [priceRange, setPriceRange] = useState([0, 250]);
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedFuel, setSelectedFuel] = useState("");
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("popularity");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [filteredCars, setFilteredCars] = useState(cars);
   const [openCar, setOpenCar] = useState(null);
   const [bookings, setBookings] = useState([]);
 
@@ -50,8 +59,21 @@ export default function Cars({ lang = 'en' }) {
     return ["All", ...Array.from(set)];
   }, []);
 
+  const brands = useMemo(() => [...new Set(cars.map(car => car.brand))], [cars]);
+  const fuels = useMemo(() => [...new Set(cars.map(car => car.fuel))], [cars]);
+  const allFeatures = useMemo(() => {
+    const features = new Set();
+    cars.forEach(car => {
+      if (car.features) {
+        car.features.forEach(feature => features.add(feature));
+      }
+    });
+    return [...features];
+  }, [cars]);
+
   const filtered = useMemo(() => {
-    return cars.filter((c) => {
+    let filtered = cars.filter((c) => {
+      // Basic filters
       if (type !== "All" && c.type !== type) return false;
       if (!c.locations.includes(location)) return false;
       if (driveMode !== "All" && c.transmission !== driveMode) return false;
@@ -59,19 +81,62 @@ export default function Cars({ lang = 'en' }) {
         const min = parseInt(seats);
         if (Number.isFinite(min) && c.seats < min) return false;
       }
-      const q = query.trim().toLowerCase();
-      if (
-        q &&
-        !(
-          c.brand.toLowerCase().includes(q) ||
-          c.model.toLowerCase().includes(q) ||
-          c.type.toLowerCase().includes(q)
-        )
-      )
-        return false;
+
+      // Advanced filters
+      if (selectedBrand && c.brand !== selectedBrand) return false;
+      if (selectedFuel && c.fuel !== selectedFuel) return false;
+      if (c.pricePerDay < priceRange[0] || c.pricePerDay > priceRange[1]) return false;
+      if (availabilityFilter === 'available' && !c.availability) return false;
+      if (availabilityFilter === 'unavailable' && c.availability) return false;
+      if (selectedFeatures.length > 0) {
+        const hasAllFeatures = selectedFeatures.every(feature => 
+          c.features && c.features.includes(feature)
+        );
+        if (!hasAllFeatures) return false;
+      }
+
       return true;
     });
-  }, [query, location, type, seats, driveMode]);
+
+    // Sort cars
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'price':
+          aValue = a.pricePerDay;
+          bValue = b.pricePerDay;
+          break;
+        case 'rating':
+          aValue = a.rating || 0;
+          bValue = b.rating || 0;
+          break;
+        case 'popularity':
+          aValue = a.popularity || 0;
+          bValue = b.popularity || 0;
+          break;
+        case 'year':
+          aValue = a.year || 0;
+          bValue = b.year || 0;
+          break;
+        case 'mileage':
+          aValue = a.mileage || 0;
+          bValue = b.mileage || 0;
+          break;
+        default:
+          aValue = a.popularity || 0;
+          bValue = b.popularity || 0;
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+
+    return filtered;
+  }, [type, location, driveMode, seats, selectedBrand, selectedFuel, priceRange, availabilityFilter, selectedFeatures, sortBy, sortOrder]);
 
   function handleBooked(res) {
     setBookings((prev) => [res, ...prev]);
@@ -81,13 +146,18 @@ export default function Cars({ lang = 'en' }) {
   return (
     <div className="pt-20 bg-slate-50 min-h-screen">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Advanced Search - Real-time search bar */}
+        <AdvancedSearch 
+          cars={cars} 
+          onFilteredCars={setFilteredCars} 
+          lang={lang} 
+        />
+
         <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6 lg:gap-8">
           {/* Filters Sidebar */}
-          <aside className="lg:sticky lg:top-24 lg:h-fit">
+          <aside className="lg:sticky lg:top-24">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-6">
               <Filters
-                query={query}
-                setQuery={setQuery}
                 location={location}
                 setLocation={setLocation}
                 locations={locations.length ? locations : ["Prishtina"]}
@@ -99,6 +169,23 @@ export default function Cars({ lang = 'en' }) {
                 driveMode={driveMode}
                 setDriveMode={setDriveMode}
                 driveModes={driveModes}
+                priceRange={priceRange}
+                setPriceRange={setPriceRange}
+                selectedBrand={selectedBrand}
+                setSelectedBrand={setSelectedBrand}
+                brands={brands}
+                selectedFuel={selectedFuel}
+                setSelectedFuel={setSelectedFuel}
+                fuels={fuels}
+                selectedFeatures={selectedFeatures}
+                setSelectedFeatures={setSelectedFeatures}
+                allFeatures={allFeatures}
+                availabilityFilter={availabilityFilter}
+                setAvailabilityFilter={setAvailabilityFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
                 lang={lang}
               />
             </div>
